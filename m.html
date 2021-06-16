@@ -1,0 +1,556 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link rel=icon type=image/png href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpI
+rGAAAAmVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAjHWqVAAAAMnRSTlMA/AQ81YK4QRYPAe++oWdeWEUzGerl3sOckYtNMPfz2tCxq354cywlIRLXppUpCufYxW
+Uhc5IAAAEsSURBVDjL7VFJcoMwEByxg8GsBgzebcB4S9L/f1yQCIgiVTnn4DmoxXQzS4veoQRebv/BhzegmOXUyV1nqh0pw5dVaD
+uWpAfJX2BM/1xAxNYZMibDcsInjzKqzU4VDxVXYNbIX1dRDwv8DOHke2SygHsSsPRu8PvMOWS4yAZ4CDz6LvR+QT0ENnIffAlbFv
+EdOb/FhlIgcUbBuleHGhVwudKo6QBPjrBEYnLdmirsecWKLMCXAttrOexLCrDtHMgcCsaFZdTsRSbQWmlDlEOjeZw7Z5/AxuDrpV
+j/Emidsy3gagpRA5RzPtrZnYEMUMXYzJ4LjhU/P3DncMLnlHteY9PLFNGHNcIypI7kNwyA25fMfNEOgHHWg55XDtvVMRheWZzlTj
+vpvvqi/xLfk9caJhNPqVMAAAAASUVORK5CYII=">
+<title>M.html</title>
+<style>
+    body {
+        margin: 0;
+        background-color: #f1f3f4;
+        overflow-wrap: break-word;
+    }
+
+    #progress {
+        pointer-events: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background-color: #ccc;
+        opacity: 0.1;
+        transition-property: opacity;
+        transition-duration: 0.3s;
+        text-align: center;
+    }
+
+    #progress.in-progress {
+        pointer-events: auto;
+        opacity: 1;
+        transition-delay: 0.3s;
+        transition-duration: 3s;
+    }
+
+    #progress-indicator {
+        display: none;
+        margin-top: 100px;
+    }
+
+    #progress.in-progress #progress-indicator {
+        display: inline-block;
+        animation: spin 2s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+    }
+
+    @keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    #breadcrumb {
+        list-style: none;
+        border-bottom: 1px solid grey;
+        margin: 0;
+        padding: 5px;
+        font-size: 20px;
+    }
+
+    #breadcrumb li {
+        display: inline;
+        padding: 2px;
+    }
+
+    #breadcrumb li:last-child:after {
+        margin-left: 3px;
+        content: "/";
+        color: grey;
+    }
+
+    #breadcrumb a:after {
+        margin-left: 3px;
+        content: "/";
+        color: grey;
+    }
+
+    #breadcrumb a {
+        border-bottom: 2px solid transparent;
+        color: blue;
+        text-decoration: none;
+        transition: border-bottom-color;
+        transition-duration: 0.5s;
+    }
+
+    #breadcrumb a:visited {
+        color: blue;
+    }
+
+    #breadcrumb a:hover {
+        border-bottom-color: blue;
+    }
+
+
+    #dirs {
+        list-style: none;
+        margin: 0;
+        padding: 5px;
+        font-size: 25px;
+    }
+
+    #dirs li {
+        margin: 5px 0;
+    }
+
+    #dirs a {
+        display: block;
+        border-bottom: 3px solid transparent;
+        text-decoration: none;
+        color: blue;
+        font-weight: bold;
+        transition: border-bottom-color;
+        transition-duration: 0.5s;
+    }
+
+    #dirs a:after {
+        content: "/";
+        color: grey;
+        margin-left: 3px;
+    }
+
+    #dirs a:hover {
+        border-bottom-color: blue;
+    }
+
+
+    #files {
+        list-style: none;
+        margin: 0;
+        padding: 5px;
+        font-size: 20px;
+    }
+
+    #files li {
+        margin: 5px 0;
+    }
+
+    #files a {
+        display: block;
+        padding: 3px 10px 3px 10px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        color: blue;
+        transition: border-bottom-color;
+        transition-duration: 0.5s;
+    }
+
+    #files a:before {
+        content: "";
+        display: inline-block;
+        width: 20px;
+    }
+
+    #files a:hover {
+        border-bottom-color: blue;
+    }
+
+    #files a.selected {
+        border-radius: 20px;
+        border-color: blue;
+    }
+
+    #files a.selected:before {
+        content: "\0002C3";
+    }
+
+
+    #audio {
+        position: fixed;
+        width: 100%;
+        bottom: 0;
+    }
+
+    #audio::-webkit-media-controls-enclosure {
+        border: 10px double #ccc;
+    }
+</style>
+
+<div id=progress>
+    <svg id=progress-indicator width=32 height=32>
+        <path fill=blue
+              d="M 32 16
+               A 16 16 0 1 1 16 0
+               A 4 4 0 0 1 16 8
+               A 8 8 0 1 0 24 16
+               A 4 4 0 0 0 32 16
+               " />
+    </svg>
+</div>
+<ul id=breadcrumb>
+</ul>
+<template id=template-breadcrumb-li-link>
+    <li><a href=></a></li>
+</template>
+<template id=template-breadcrumb-li-text>
+    <li></li>
+</template>
+
+<ul id=dirs style="display: none">
+</ul>
+<template id=template-dirs-li>
+    <li><a href=></a>
+</template>
+
+<!-- empty.mp3 -->
+<audio id=audio autoplay controls style="display: none" src="data:audio/mpeg;base64,
+//uQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+"></audio>
+
+<ul id=files style="display: none">
+</ul>
+<template id=template-files-li>
+    <li><a href=></a>
+</template>
+
+<script>
+    (function () {
+        const supportedExtensions = {};
+
+        const progressElement = document.getElementById("progress");
+        const breadcrumbElement = document.getElementById("breadcrumb");
+        const dirsElement = document.getElementById("dirs");
+        const audioElement = document.getElementById("audio");
+        const filesElement = document.getElementById("files");
+        const templateBreadcrumbLiLink = document.getElementById("template-breadcrumb-li-link");
+        const templateBreadcrumbLiText = document.getElementById("template-breadcrumb-li-text");
+        const templateDirsLi = document.getElementById("template-dirs-li");
+        const templateFilesLi = document.getElementById("template-files-li");
+
+        const domParser = new DOMParser();
+        let emptyAudioDataUrl;
+
+        let files = null;
+        let selectedFileIndex = null;
+
+        onpopstate = historyPopState;
+        initAudio();
+        updateInterface(true);
+
+
+        function historyPopState() {
+            updateInterface(false);
+        }
+
+        function initAudio() {
+            emptyAudioDataUrl = audioElement.src;
+
+            const volume = localStorage.getItem("volume");
+            if (volume != null) {
+                audioElement.volume = volume;
+            }
+            audioElement.onended = audioEnded;
+            audioElement.onvolumechange = audioVolumeChange;
+
+            const types = {"audio/aac": "m4a", "audio/flac": "flac", "audio/mpeg": "mp3",
+                "audio/ogg": "ogg", "audio/wav": "wav", "audio/webm": "webm",};
+            for (const type of Object.keys(types)) {
+                if (audioElement.canPlayType(type) !== "") {
+                    supportedExtensions[types[type]] = true;
+                }
+            }
+        }
+
+        function audioEnded() {
+            if (selectedFileIndex == null) {
+                return;
+            }
+            files[selectedFileIndex].anchorElement.classList.remove("selected");
+            selectedFileIndex = selectedFileIndex + 1;
+            if (selectedFileIndex >= files.length) {
+                selectedFileIndex = null;
+                audioElement.src = emptyAudioDataUrl;
+                return;
+            }
+            files[selectedFileIndex].anchorElement.classList.add("selected");
+            audioElement.src = files[selectedFileIndex].relativePath;
+
+            history.replaceState(undefined, undefined, "#" + files[selectedFileIndex].relativePath);
+            document.title = files[selectedFileIndex].name;
+        }
+
+        function audioVolumeChange() {
+            localStorage.setItem("volume", audioElement.volume);
+        }
+
+        function updateInterface(initialLoad) {
+            let setInProgressTimeoutID;
+            if (initialLoad) {
+                // avoid page flickering
+                setInProgressTimeoutID = setTimeout(() => {
+                    progressElement.classList.add("in-progress");
+                    setInProgressTimeoutID = null;
+                }, 0);
+            } else {
+                setInProgressTimeoutID = null;
+                progressElement.classList.add("in-progress");
+            }
+
+            const parsedLocationHash = parseLocationHash();
+
+            document.title = parsedLocationHash.title;
+
+            updateBreadcrumb(parsedLocationHash.breadcrumbItems);
+
+            setDisplayVisibility(dirsElement, false);
+            setDisplayVisibility(filesElement, false);
+            hideAudioElement();
+            selectedFileIndex = null;
+
+            fetchListing(parsedLocationHash.listingRelativePath).then(result => {
+                files = result.files;
+                replaceDirsChildren(dirsElement, result.dirs);
+                replaceFilesChildren(filesElement, files);
+                if (files.length > 0) {
+                    showAudioElement();
+                }
+                if (parsedLocationHash.fileRelativePath != null) {
+                    for (const [fileIndex, file] of files.entries()) {
+                        if (file.relativePath === parsedLocationHash.fileRelativePath) {
+                            selectedFileIndex = fileIndex;
+                            break;
+                        }
+                    }
+                    if (selectedFileIndex != null) {
+                        audioElement.src = files[selectedFileIndex].relativePath;
+                        files[selectedFileIndex].anchorElement.classList.add("selected");
+                    } else {
+                        history.replaceState(undefined, undefined,
+                            "#" + parsedLocationHash.listingRelativePath);
+                    }
+                }
+
+                if (setInProgressTimeoutID != null) {
+                    clearTimeout(setInProgressTimeoutID);
+                }
+                progressElement.classList.remove("in-progress");
+            }).catch(error => {
+                console.error(error);
+
+                if (setInProgressTimeoutID != null) {
+                    clearTimeout(setInProgressTimeoutID);
+                }
+                progressElement.classList.remove("in-progress");
+            });
+        }
+
+        function parseLocationHash() {
+            const components = location.hash.substring(1).split("/");
+            const directoryComponents = components.slice(0, -1);
+            const fileComponent = components[components.length - 1];
+
+            let title;
+            if (fileComponent === "") {
+                if (directoryComponents.length === 0) {
+                    title = "M.html";
+                } else {
+                    title = decodeURIComponent(directoryComponents[directoryComponents.length - 1]);
+                }
+            } else {
+                const fileName = decodeURIComponent(fileComponent);
+                [title, _] = splitExtension(fileName);
+            }
+
+            const breadcrumbItems = [{name: "Music", relativePath: ""}];
+            let relativePath = "";
+            for (const directory of directoryComponents) {
+                relativePath += directory + "/";
+                breadcrumbItems.push({name: decodeURIComponent(directory), relativePath});
+            }
+
+            const listingRelativePath = relativePath;
+
+            const fileRelativePath = fileComponent !== "" ? listingRelativePath + fileComponent : null;
+
+            return {title, breadcrumbItems, listingRelativePath, fileRelativePath};
+        }
+
+        function updateBreadcrumb(breadcrumbItems) {
+            const childrenDocumentFragment = new DocumentFragment();
+
+            for (const item of breadcrumbItems.slice(0, -1)) {
+                const content = templateBreadcrumbLiLink.content.cloneNode(true);
+                const anchorElement = content.querySelector("a");
+                anchorElement.href = "#" + item.relativePath;
+                anchorElement.textContent = item.name;
+                childrenDocumentFragment.appendChild(content);
+            }
+
+            const contentBreadcrumbLiText = templateBreadcrumbLiText.content.cloneNode(true);
+            const liElement = contentBreadcrumbLiText.querySelector("li");
+            liElement.textContent = breadcrumbItems[breadcrumbItems.length - 1].name;
+            childrenDocumentFragment.appendChild(contentBreadcrumbLiText);
+
+            breadcrumbElement.replaceChildren(childrenDocumentFragment);
+        }
+
+        async function fetchListing(relativePath) {
+            // the following comments will assume relativePath = "artist/album/"
+            // and location.href = "http://127.0.0.1:5000/music/m.html"
+
+            // locationDirectoryURL.href = "http://127.0.0.1:5000/music/"
+            const locationDirectoryURL = new URL(".", new URL(location.href));
+            const locationDirectoryURLString = locationDirectoryURL.toString();
+
+            // listingURL.href = "http://127.0.0.1:5000/music/artist/album/"
+            const listingURL = relativePath === "" ? locationDirectoryURL : new URL(relativePath, locationDirectoryURL);
+            const listingURLString = listingURL.toString();
+            if (!listingURLString.startsWith(locationDirectoryURLString)) {
+                throw new Error(`Unexpected relativePath "${relativePath}"`);
+            }
+
+            const response = await fetch(listingURL);
+            const text = await response.text();
+            const doc = domParser.parseFromString(text, "text/html");
+
+            const dirs = [];
+            const files = [];
+            for (const anchorElement of doc.getElementsByTagName("a")) {
+                // a.href probably is relative, including "..", resolve it against listingURL
+                const anchorURL = new URL(anchorElement.getAttribute("href"), listingURL);
+                const anchorURLString = anchorURL.toString();
+
+                // filter out all non-nested links (either ".." or some unrelated links)
+                if (!anchorURLString.startsWith(listingURLString)) {
+                    continue;
+                }
+
+                // URL path relative to locationDirectoryURL, something like "artist/album/song.flac"
+                const anchorRelativePath = anchorURLString.substring(locationDirectoryURLString.length);
+
+                // should be "dir/" or "song.flac"
+                const name = decodeURIComponent(anchorURLString.substring(listingURLString.length));
+
+                if (name.startsWith(".")) {
+                    // filter out "hidden" names starting with dot
+                    continue;
+                }
+
+                if (name.endsWith("/")) {
+                    if (name === "/") {
+                        console.warn("Weird directory link", anchorElement.getAttribute("href"));
+                        continue;
+                    }
+                    // add dir stripping last "/" from name
+                    dirs.push({relativePath: anchorRelativePath, name: name.slice(0, -1)});
+                    continue;
+                }
+
+                const [baseName, extension] = splitExtension(name);
+                if (supportedExtensions[extension] === true) {
+                    // add files with supported extensions stripping extension from name
+                    files.push({relativePath: anchorRelativePath, name: baseName});
+                }
+            }
+
+            const collator = new Intl.Collator(undefined, {sensitivity: "base", numeric: true});
+            dirs.sort((d1, d2) => collator.compare(d1.name, d2.name));
+            files.sort((f1, f2) => collator.compare(f1.name, f2.name));
+            return {dirs, files};
+        }
+
+        function replaceDirsChildren(dirsElement, dirs) {
+            const childrenDocumentFragment = new DocumentFragment();
+            let dirsNotEmpty = false;
+            for (const dir of dirs) {
+                const content = templateDirsLi.content.cloneNode(true);
+                const anchorElement = content.querySelector("a");
+                anchorElement.href = "#" + dir.relativePath;
+                anchorElement.textContent = dir.name;
+                childrenDocumentFragment.appendChild(content);
+                dirsNotEmpty = true;
+            }
+            dirsElement.replaceChildren(childrenDocumentFragment);
+            setDisplayVisibility(dirsElement, dirsNotEmpty);
+        }
+
+        function replaceFilesChildren(filesElement, files) {
+            const childrenDocumentFragment = new DocumentFragment();
+            let filesNotEmpty = false;
+            for (const [fileIndex, file] of files.entries()) {
+                const content = templateFilesLi.content.cloneNode(true);
+                const anchorElement = content.querySelector("a");
+                anchorElement.href = "#" + file.relativePath;
+                anchorElement.onclick = fileClicked;
+                anchorElement.dataset.fileIndex = fileIndex.toString();
+                anchorElement.textContent = file.name
+                file.anchorElement = anchorElement;
+                childrenDocumentFragment.appendChild(content);
+                filesNotEmpty = true;
+            }
+            filesElement.replaceChildren(childrenDocumentFragment);
+            setDisplayVisibility(filesElement, filesNotEmpty);
+        }
+
+        function fileClicked(event) {
+            event.preventDefault();
+            const anchorElement = event.currentTarget;
+
+            const fileIndex = parseInt(anchorElement.dataset.fileIndex, 10);
+            if (selectedFileIndex === fileIndex) {
+                if (audioElement.paused
+                    && audioElement.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
+                    audioElement.play();
+                } else {
+                    audioElement.pause();
+                }
+                return;
+            }
+
+            if (selectedFileIndex != null) {
+                files[selectedFileIndex].anchorElement.classList.remove("selected");
+            }
+
+            selectedFileIndex = fileIndex;
+
+            anchorElement.classList.add("selected");
+            audioElement.src = files[selectedFileIndex].relativePath;
+
+            history.replaceState(undefined, undefined, "#" + files[selectedFileIndex].relativePath);
+            document.title = files[selectedFileIndex].name;
+        }
+
+        function setDisplayVisibility(element, visible) {
+            element.style.display = visible ? "" : "none";
+        }
+
+        function showAudioElement() {
+            audioElement.style.display = "block";
+            document.body.style.marginBottom = audioElement.clientHeight + "px";
+        }
+
+        function hideAudioElement() {
+            audioElement.style.display = "none";
+            audioElement.src = emptyAudioDataUrl;
+            document.body.style.marginBottom = "0";
+        }
+
+        function splitExtension(name) {
+            const dotIndex = name.lastIndexOf(".");
+            if (dotIndex === -1) {
+                return [name, undefined];
+            }
+            return [name.substring(0, dotIndex), name.substring(dotIndex + 1)];
+        }
+    })();
+</script>
