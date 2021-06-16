@@ -451,6 +451,14 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
                         console.warn("Weird directory link", anchorElement.getAttribute("href"));
                         continue;
                     }
+                    // special case for GitHub Pages example
+                    if (anchorRelativePath.startsWith("m.html#")) {
+                        dirs.push({
+                            relativePath: anchorRelativePath.substring(7),
+                            name: name.slice(7, -1)
+                        });
+                        continue;
+                    }
                     // add dir stripping last "/" from name
                     dirs.push({relativePath: anchorRelativePath, name: name.slice(0, -1)});
                     continue;
